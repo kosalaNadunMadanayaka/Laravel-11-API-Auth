@@ -8,8 +8,66 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * @OA\Info(
+ *     title="Laravel 11 Authentication",
+ *     version="0.0.1",
+ *     description="API Documentation for Laravel Auth",
+ *     @OA\Contact(
+ *         email="nadun@thesanmark.com"
+ *     )
+ * )
+ */
 class AuthController extends Controller
 {
+    /**
+     * @OA\Post(
+     *     path="/api/register",
+     *     operationId="register",
+     *     tags={"Authentication"},
+     *     summary="Register user",
+     *     description="Returns access token",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="name", type="string"),
+     *             @OA\Property(property="email", type="string"),
+     *             @OA\Property(property="password", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="User Created",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="status", type="boolen"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="token", type="string")
+     *         )
+     *      ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="status", type="boolen"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="error", type="json")
+     *         )
+     *      ),
+     *      @OA\Response(
+     *         response=500,
+     *         description="Internal Server error",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="status", type="boolen"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="error", type="json")
+     *         )
+     *      )
+     * )
+     */
     public function register(Request $request)
     {
         try {
@@ -26,7 +84,7 @@ class AuthController extends Controller
                         'message' => 'validation error',
                         'errors' => $validateUser->errors(),
                     ],
-                    401,
+                    400,
                 );
             }
 
@@ -40,9 +98,9 @@ class AuthController extends Controller
                 [
                     'status' => true,
                     'message' => 'User created successfully',
-                    'token' => $user->createToken('API TOKEN')->plainTextToken,
+                    'token' => $user->createToken('API TOKEN', ['*'], now()->addweek())->plainTextToken,
                 ],
-                200,
+                201,
             );
         } catch (\Throwable $th) {
             return response()->json(
@@ -56,6 +114,53 @@ class AuthController extends Controller
         }
     }
 
+     /**
+     * @OA\Post(
+     *     path="/api/login",
+     *     operationId="login",
+     *     tags={"Authentication"},
+     *     summary="Login user",
+     *     description="Returns access token",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="email", type="string"),
+     *             @OA\Property(property="password", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User Logged",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="status", type="boolen"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="token", type="string")
+     *         )
+     *      ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="status", type="boolen"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="error", type="json")
+     *         )
+     *      ),
+     *      @OA\Response(
+     *         response=500,
+     *         description="Internal Server error",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="status", type="boolen"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="error", type="json")
+     *         )
+     *      )
+     * )
+     */
     public function login(Request $request)
     {
         try {
@@ -71,7 +176,7 @@ class AuthController extends Controller
                         'message' => 'validation error',
                         'errors' => $validateUser->errors(),
                     ],
-                    401,
+                    400,
                 );
             }
 
@@ -90,7 +195,7 @@ class AuthController extends Controller
                 [
                     'status' => true,
                     'message' => 'User logged in successfully',
-                    'token' => $user->createToken('API TOKEN')->plainTextToken,
+                    'token' => $user->createToken('API TOKEN', ['*'], now()->addweek())->plainTextToken,
                 ],
                 200,
             );
@@ -106,6 +211,27 @@ class AuthController extends Controller
         }
     }
 
+     /**
+     * @OA\Get(
+     *     path="/api/profile",
+     *     operationId="profile",
+     *     tags={"Account"},
+     *     summary="user profile",
+     *     description="get user profile details",
+     *     @OA\Response(
+     *         response=200,
+     *         description="User Logged out",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="status", type="boolen"),
+     *             @OA\Property(property="message", type="string"),
+     *             @OA\Property(property="user data"),
+     *             @OA\Property(property="user id", type="integer"),
+     *         )
+     *      )
+     * )
+     */
+
     public function profile()
     {
         $userData = auth()->user();
@@ -120,6 +246,24 @@ class AuthController extends Controller
         );
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/logout",
+     *     operationId="logout",
+     *     tags={"Authentication"},
+     *     summary="logout user",
+     *     description="User logged out",
+     *     @OA\Response(
+     *         response=200,
+     *         description="User Logged out",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="status", type="boolen"),
+     *             @OA\Property(property="message", type="string"),
+     *         )
+     *      )
+     * )
+     */
     public function logout()
     {
         auth()->user()->tokens()->delete();
